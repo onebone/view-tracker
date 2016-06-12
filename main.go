@@ -129,6 +129,7 @@ func main(){
 
 	log.Fatal(http.ListenAndServe(":" + config["port"].(string), handlers.ProxyHeaders(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		db, err := connectDatabase()
+		defer db.Close()
 		if checkErr(err, res) {
 			return
 		}
@@ -158,10 +159,9 @@ func main(){
 			}
 
 			log.Printf("%s: %s", req.URL.Query().Get("type"), req.RemoteAddr)
+			return
 		}
 
 		writeImage(req, res, "")
-
-		defer db.Close()
 	}))))
 }
