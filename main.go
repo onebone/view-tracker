@@ -152,14 +152,12 @@ func main(){
 
 					writeImage(req, res, m)
 					_, err = stmt.Exec(req.URL.Query().Get("type"), req.RemoteAddr)
-					if checkErr(err, res) {
-						return
-					}
+					checkErr(err, res)
+					return
 				}
 			}
 
 			log.Printf("%s: %s", req.URL.Query().Get("type"), req.RemoteAddr)
-			return
 		}
 
 		writeImage(req, res, "")
