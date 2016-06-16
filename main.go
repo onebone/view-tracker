@@ -140,6 +140,8 @@ func main(){
 		}
 
 		if req.URL.Query().Get("type") != "" {
+			log.Printf("%s: %s", req.URL.Query().Get("type"), req.RemoteAddr)
+
 			for t, msg := range config["types"].(map[string]interface{}) {
 				if t == req.URL.Query().Get("type") {
 					msgs := msg.([]interface{})
@@ -156,8 +158,6 @@ func main(){
 					return
 				}
 			}
-
-			log.Printf("%s: %s", req.URL.Query().Get("type"), req.RemoteAddr)
 		}
 
 		writeImage(req, res, "")
