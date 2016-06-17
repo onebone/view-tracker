@@ -69,7 +69,13 @@ func connectDatabase() (*sql.DB, error) {
 }
 
 func writeImage(req *http.Request, res http.ResponseWriter, message string){
-	dst := image.NewRGBA(image.Rect(0, 0, 400, 100))
+	count := 0
+	for _, b := range []byte(message) {
+		if b == '\n' {
+			count++
+		}
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, 400, 100 + count * 20))
 	draw.Draw(dst, dst.Bounds(), image.White, image.ZP, draw.Src)
 
 	b, _ := ioutil.ReadFile("font.ttf")
