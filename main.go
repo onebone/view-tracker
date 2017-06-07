@@ -10,7 +10,8 @@ import (
 	"log"
 	"path"
 	"path/filepath"
-//	"gopkg.in/telegram-bot-api.v4"
+	//"gopkg.in/telegram-bot-api.v4"
+	"encoding/base64"
 )
 
 var AppPath string
@@ -20,6 +21,8 @@ type Config struct {
 	Types []string		`json:"types"`
 }
 var config Config
+
+var image []byte
 
 func copyFile(path, dest string) error {
 	in, err := os.Open(path)
@@ -67,14 +70,18 @@ func init(){
 	if err != nil {
 		log.Panic(err)
 	}
+
+	image, err = base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func main(){
-fmt.Println(config)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
 		q := r.URL.Query().Get("type")
 		if q != "" {
-			
+			w.Write(image)
 		}
 	})
 
