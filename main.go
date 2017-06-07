@@ -10,7 +10,7 @@ import (
 	"log"
 	"path"
 	"path/filepath"
-	//"gopkg.in/telegram-bot-api.v4"
+	"gopkg.in/telegram-bot-api.v4"
 	"encoding/base64"
 	"strings"
 	"time"
@@ -23,6 +23,9 @@ type Config struct {
 	Types []string		`json:"types"`
 	LogFile string		`json:"logFile"`
 	LogFormat string	`json:"logFormat"`
+
+	BotToken string		`json:"botToken"`
+	BotAuth string		`json:"botAuth"`
 }
 var config Config
 
@@ -91,12 +94,51 @@ func contains(arr []string, item string) int {
 	return -1
 }
 
+func listenTelegram(){
+	  u := tgbotapi.NewUpdate(0)
+	  u.Timeout = 60
+	  updates, _ := bot.GetUpdatesChan(u)
+
+	  for update := range updates {
+		if update.Message == nil {
+			continue
+		}
+
+		 if update.Message.IsCommand() {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+			switch update.Message.Command(){
+				case "auth":
+				if config.BotAuth == "" || config.BotAuth != update.Message.CommandArguments() {
+					msg.Text = "Sorry, you have provided wrong authentification code."
+				}
+
+				// TODO Authorize
+			}
+
+			bot.Send(msg)
+		 }
+	  }
+}
+
+var bot *tgbotapi.BotAPI
+
 func main(){
 	f, err := os.OpenFile(config.LogFile, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0666)
 	if err != nil {
 		log.Panic(err)
 	}
 	defer f.Close()
+
+	if config.BotToken != "" {
+		var err error
+		bot, err = tgbotapi.NewBotAPI(config.BotToken)
+
+		if err == nil {
+			log.Printf("Logged in to telegram bot @%s\n", bot.Self.UserName)
+
+			go listenTelegram()
+		}
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
 		q := r.URL.Query().Get("type")

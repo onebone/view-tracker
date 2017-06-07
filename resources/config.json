@@ -2,5 +2,7 @@
 	"port": 10000,
 	"types": [],
 	"logFile": "track.log",
-	"logFormat": "[{time}] {type} - {address}"
+	"logFormat": "[{time}] {type} - {address}",
+	"botToken": "",
+	"botAuth": ""
 }
