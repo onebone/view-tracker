@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	//"gopkg.in/telegram-bot-api.v4"
 	"encoding/base64"
+	"strings"
+	"time"
 )
 
 var AppPath string
@@ -19,6 +21,8 @@ var AppPath string
 type Config struct {
 	Port int		`json:"port"`
 	Types []string		`json:"types"`
+	LogFile string		`json:"logFile"`
+	LogFormat string	`json:"logFormat"`
 }
 var config Config
 
@@ -77,10 +81,32 @@ func init(){
 	}
 }
 
+func contains(arr []string, item string) int {
+	for k, v := range arr {
+		if v == item {
+			return k
+		}
+	}
+
+	return -1
+}
+
 func main(){
+	f, err := os.OpenFile(config.LogFile, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0666)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer f.Close()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
 		q := r.URL.Query().Get("type")
 		if q != "" {
+			replacer := strings.NewReplacer("{time}", time.Now().String(), "{type}", q, "{address}", r.RemoteAddr)
+			if contains(config.Types, q) > -1 {
+				f.WriteString(replacer.Replace(config.LogFormat) + "\n")
+			}
+
+			fmt.Println(replacer.Replace(config.LogFormat))
 			w.Write(image)
 		}
 	})
