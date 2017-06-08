@@ -4,5 +4,6 @@
 	"logFile": "track.log",
 	"logFormat": "[{time}] {type} - {address}",
 	"botToken": "",
-	"botAuth": ""
+	"botAuth": "",
+	"botFormat": "[{time}] type \"{type}\" was detected from {address}"
 }

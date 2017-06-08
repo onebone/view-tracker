@@ -26,10 +26,16 @@ type Config struct {
 
 	BotToken string		`json:"botToken"`
 	BotAuth string		`json:"botAuth"`
+	BotFormat string	`json:"botFormat"`
 }
 var config Config
 
 var image []byte
+
+type Admin struct {
+	ChatID int64		`json:"chatId"`
+}
+var admins = []Admin{}
 
 func copyFile(path, dest string) error {
 	in, err := os.Open(path)
@@ -66,6 +72,17 @@ func init(){
 
 	if _, err = os.Stat(path.Join(AppPath, "config.json")); os.IsNotExist(err) {
 		copyFile(path.Join(AppPath, "resources", "config.json"), path.Join(AppPath, "config.json"))
+	}
+
+	if _, err = os.Stat(path.Join(AppPath, "admins.json")); !os.IsNotExist(err) {
+		b, err := ioutil.ReadFile(path.Join(AppPath, "admins.json"))
+		if err != nil {
+			log.Panic(err)
+		}
+		err = json.Unmarshal(b, &admins)
+		if err != nil {
+			log.Panic(err)
+		}
 	}
 
 	b, err := ioutil.ReadFile(path.Join(AppPath, "config.json"))
@@ -110,9 +127,25 @@ func listenTelegram(){
 				case "auth":
 				if config.BotAuth == "" || config.BotAuth != update.Message.CommandArguments() {
 					msg.Text = "Sorry, you have provided wrong authentification code."
-				}
+				}else{
+					admins = append(admins, Admin{
+						ChatID: update.Message.Chat.ID,
+					})
+					err := func() error {
+						json, err := json.Marshal(admins)
+						if err != nil {
+							return err
+						}
+						err = ioutil.WriteFile(path.Join(AppPath, "admins.json"), json, 0666)
+						return err
+					}()
 
-				// TODO Authorize
+					if err != nil {
+						log.Println("error during saving data", err)
+					}
+
+					msg.Text = "You are authrorized as admin."
+				}
 			}
 
 			bot.Send(msg)
@@ -143,10 +176,18 @@ func main(){
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
 		q := r.URL.Query().Get("type")
 		if q != "" {
-			replacer := strings.NewReplacer("{time}", time.Now().String(), "{type}", q, "{address}", r.RemoteAddr)
+			replacer := strings.NewReplacer("{time}", time.Now().Format("2006.01.02 03:04:05"), "{type}", q, "{address}", r.RemoteAddr)
 			if contains(config.Types, q) > -1 {
 				f.WriteString(replacer.Replace(config.LogFormat) + "\n")
 			}
+
+			go func(){
+				if bot != nil {
+					for _, admin := range admins {
+						bot.Send(tgbotapi.NewMessage(admin.ChatID, replacer.Replace(config.BotFormat)))
+					}
+				}
+			}()
 
 			fmt.Println(replacer.Replace(config.LogFormat))
 			w.Write(image)
