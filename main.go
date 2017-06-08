@@ -197,7 +197,7 @@ func main(){
 				addr = r.Header.Get("X-Forwarded-For")
 			}
 
-			replacer := strings.NewReplacer("{time}", time.Now().Format("2006.01.02 03:04:05"), "{type}", q, "{address}", addr)
+			replacer := strings.NewReplacer("{time}", time.Now().Format("2006.01.02 15:04:05"), "{type}", q, "{address}", addr)
 			if contains(config.Types, q) > -1 {
 				f.WriteString(replacer.Replace(config.LogFormat) + "\n")
 			}
