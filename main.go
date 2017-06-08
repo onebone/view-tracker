@@ -111,6 +111,16 @@ func contains(arr []string, item string) int {
 	return -1
 }
 
+func containsChatId(arr []Admin, chatId int64) int {
+	for k, v := range arr {
+		if v.ChatID == chatId {
+			return k
+		}
+	}
+
+	return -1
+}
+
 func listenTelegram(){
 	  u := tgbotapi.NewUpdate(0)
 	  u.Timeout = 60
@@ -125,6 +135,11 @@ func listenTelegram(){
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 			switch update.Message.Command(){
 				case "auth":
+				if containsChatId(admins, update.Message.Chat.ID) > -1 {
+					msg.Text = "You are already authorized."
+					break
+				}
+
 				if config.BotAuth == "" || config.BotAuth != update.Message.CommandArguments() {
 					msg.Text = "Sorry, you have provided wrong authentification code."
 				}else{
@@ -175,8 +190,14 @@ func main(){
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
 		q := r.URL.Query().Get("type")
+
 		if q != "" {
-			replacer := strings.NewReplacer("{time}", time.Now().Format("2006.01.02 03:04:05"), "{type}", q, "{address}", r.RemoteAddr)
+			addr := r.RemoteAddr
+			if r.Header.Get("X-Forwarded-For") != "" {
+				addr = r.Header.Get("X-Forwarded-For")
+			}
+
+			replacer := strings.NewReplacer("{time}", time.Now().Format("2006.01.02 03:04:05"), "{type}", q, "{address}", addr)
 			if contains(config.Types, q) > -1 {
 				f.WriteString(replacer.Replace(config.LogFormat) + "\n")
 			}
